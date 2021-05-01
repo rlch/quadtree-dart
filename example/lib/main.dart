@@ -7,6 +7,7 @@ void main() {
   runApp(
     ProviderScope(
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: App(),
       ),
     ),
@@ -16,17 +17,19 @@ void main() {
 class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 300,
-          child: Sidebar(),
-        ),
-        VerticalDivider(),
-        Expanded(
-          child: QuadtreeView(),
-        ),
-      ],
+    return Scaffold(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 300,
+            child: Sidebar(),
+          ),
+          Expanded(
+            child: QuadtreeView(),
+          ),
+        ],
+      ),
     );
   }
 }

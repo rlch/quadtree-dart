@@ -1,15 +1,13 @@
+import 'dart:ui';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:quadtree_dart/quadtree_dart.dart';
 
-final boundsProvider = StateProvider<Rect>((ref) => Rect(
-      x: 0,
-      y: 0,
-      height: 200,
-      width: 200,
-    ));
-
+final lowerNodeDiameterProvider = StateProvider<double>((ref) => 10);
+final higherNodeDiameterProvider = StateProvider<double>((ref) => 20);
+final boundsProvider = StateProvider<Size>((ref) => Size(200, 200));
 final maxObjectsProvider = StateProvider<int>((ref) => 10);
-final maxDepthProvider = StateProvider<int>((ref) => 4);
+final maxDepthProvider = StateProvider<int>((ref) => 10);
 
 final quadtreeProvider =
     StateNotifierProvider<QuadtreeNotifier, Quadtree>((ref) {
@@ -18,7 +16,12 @@ final quadtreeProvider =
   final maxDepth = ref.watch(maxDepthProvider).state;
 
   return QuadtreeNotifier(
-    bounds: bounds,
+    bounds: Rect(
+      width: bounds.width,
+      height: bounds.height,
+      x: 0,
+      y: 0,
+    ),
     maxObjects: maxObjects,
     maxDepth: maxDepth,
   );
@@ -35,14 +38,18 @@ class QuadtreeNotifier extends StateNotifier<Quadtree> {
           maxDepth: maxDepth,
         ));
 
-  static const double height = 20;
-  static const double width = 20;
+  void insert(
+    double x,
+    double y, {
+    required double diameter,
+  }) =>
+      state = state
+        ..insert(Rect(
+          x: x,
+          y: y,
+          height: diameter,
+          width: diameter,
+        ));
 
-  void insert(double x, double y) => state = state
-    ..insert(Rect(
-      x: x + height / 2,
-      y: y + width / 2,
-      height: height,
-      width: width,
-    ));
+  void clear() => state = state..clear();
 }
