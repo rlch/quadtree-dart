@@ -1,4 +1,5 @@
 import 'package:quadtree_dart/src/rect.dart';
+import 'package:quiver/core.dart';
 
 class Quadtree {
   Quadtree(
@@ -20,6 +21,24 @@ class Quadtree {
   /// Subnodes of the [Quadtree].
   final List<Quadtree> nodes;
 
+  @override
+  int get hashCode => hashObjects([
+        bounds,
+        maxObjects,
+        maxDepth,
+        depth,
+        ...objects,
+        ...nodes,
+      ]);
+
+  @override
+  bool operator ==(o) =>
+      o is Quadtree &&
+      o.bounds == bounds &&
+      o.maxObjects == maxObjects &&
+      o.maxDepth == maxDepth &&
+      o.depth == depth;
+
   /// Split the node into 4 subnodes (ne, nw, sw, se)
   void split() {
     final nextDepth = depth + 1;
@@ -29,7 +48,7 @@ class Quadtree {
     final y = bounds.y;
 
     /// Top-right node
-    nodes[0] = Quadtree(
+    final ne = Quadtree(
       Rect(
         x: x + subWidth,
         y: y,
@@ -42,7 +61,7 @@ class Quadtree {
     );
 
     /// Top-left node
-    nodes[1] = Quadtree(
+    final nw = Quadtree(
       Rect(
         x: x,
         y: y,
@@ -55,7 +74,7 @@ class Quadtree {
     );
 
     /// Bottom-left node
-    nodes[2] = Quadtree(
+    final sw = Quadtree(
       Rect(
         x: x,
         y: y + subHeight,
@@ -68,7 +87,7 @@ class Quadtree {
     );
 
     /// Bottom-right node
-    nodes[3] = Quadtree(
+    final se = Quadtree(
       Rect(
         x: x + subWidth,
         y: y + subHeight,
@@ -79,6 +98,8 @@ class Quadtree {
       maxDepth: maxDepth,
       depth: nextDepth,
     );
+
+    nodes.addAll([ne, nw, sw, se]);
   }
 
   /// Determines which node the object belongs to.

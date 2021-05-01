@@ -1,3 +1,4 @@
 library quadtree_dart;
 
-export 'package:quadtree_dart/quadtree_dart.dart';
+export 'src/quadtree.dart';
+export 'src/rect.dart';
