@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "rjmath-299509"
+  },
+  "targets": {
+    "rjmath-299509": {
+      "hosting": {
+        "quadtree": [
+          "rjmath-quadtree"
+        ]
+      }
+    }
+  }
+}

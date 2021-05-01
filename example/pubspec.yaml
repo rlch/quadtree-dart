@@ -13,6 +13,7 @@ dependencies:
     sdk: flutter
   quadtree_dart:
     path: ../
+  firebase_core: "^1.1.0"
   flutter_riverpod: ^0.14.0+3
   dotted_line: ^3.0.0
   font_awesome_flutter: ^9.0.0

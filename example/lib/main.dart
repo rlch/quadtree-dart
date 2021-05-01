@@ -7,6 +7,7 @@ void main() {
   runApp(
     ProviderScope(
       child: MaterialApp(
+        title: 'Quadtree by RJM',
         debugShowCheckedModeBanner: false,
         home: App(),
       ),
