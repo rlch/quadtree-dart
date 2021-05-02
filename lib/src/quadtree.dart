@@ -2,7 +2,7 @@ import 'package:quiver/core.dart';
 
 import 'rect.dart';
 
-class Quadtree {
+class Quadtree<O extends Rect> {
   Quadtree(
     this.bounds, {
     this.maxObjects = 10,
@@ -17,10 +17,10 @@ class Quadtree {
   final int depth;
 
   /// Objects contained within the node
-  final List<Rect> objects;
+  final List<O> objects;
 
   /// Subnodes of the [Quadtree].
-  final List<Quadtree> nodes;
+  final List<Quadtree<O>> nodes;
 
   @override
   int get hashCode => hashObjects([
@@ -38,7 +38,8 @@ class Quadtree {
       o.bounds == bounds &&
       o.maxObjects == maxObjects &&
       o.maxDepth == maxDepth &&
-      o.depth == depth;
+      o.depth == depth &&
+      o.nodes == nodes;
 
   /// Split the node into 4 subnodes (ne, nw, sw, se)
   void split() {
@@ -49,7 +50,7 @@ class Quadtree {
     final y = bounds.y;
 
     /// Top-right node
-    final ne = Quadtree(
+    final ne = Quadtree<O>(
       Rect(
         x: x + subWidth,
         y: y,
@@ -62,7 +63,7 @@ class Quadtree {
     );
 
     /// Top-left node
-    final nw = Quadtree(
+    final nw = Quadtree<O>(
       Rect(
         x: x,
         y: y,
@@ -75,7 +76,7 @@ class Quadtree {
     );
 
     /// Bottom-left node
-    final sw = Quadtree(
+    final sw = Quadtree<O>(
       Rect(
         x: x,
         y: y + subHeight,
@@ -88,7 +89,7 @@ class Quadtree {
     );
 
     /// Bottom-right node
-    final se = Quadtree(
+    final se = Quadtree<O>(
       Rect(
         x: x + subWidth,
         y: y + subHeight,
@@ -105,17 +106,17 @@ class Quadtree {
 
   /// Determines which node the object belongs to.
   ///
-  /// Takes the [Rect] bounds of the area to be checked.
+  /// Takes the [O] bounds of the area to be checked.
   /// Returns a [List<int>] of the intersecting subnodes (ne, nw, sw, se)
-  List<int> getIndexes(Rect rect) {
+  List<int> getIndexes(O object) {
     final List<int> indexes = [];
     final xMidpoint = bounds.x + bounds.width / 2;
     final yMidpoint = bounds.y + bounds.height / 2;
 
-    final startIsNorth = rect.y < yMidpoint;
-    final startIsWest = rect.x < xMidpoint;
-    final endIsEast = rect.x + rect.width > xMidpoint;
-    final endIsSouth = rect.y + rect.height > yMidpoint;
+    final startIsNorth = object.y < yMidpoint;
+    final startIsWest = object.x < xMidpoint;
+    final endIsEast = object.x + object.width > xMidpoint;
+    final endIsSouth = object.y + object.height > yMidpoint;
 
     if (startIsNorth && endIsEast) indexes.add(0);
     if (startIsWest && startIsNorth) indexes.add(1);
@@ -128,31 +129,31 @@ class Quadtree {
   /// Insert the object into the node. If the node exceeds the capacity,
   /// it will split and add all objects to their corresponding subnodes.
   ///
-  /// Takes [Rect] bounds to be inserted.
-  void insert(Rect rect) {
+  /// Takes [O] bounds to be inserted.
+  void insert(O object) {
     late final List<int> indexes;
 
     /// If we have subnodes, call [insert] on the matching subnodes.
     if (nodes.isNotEmpty) {
-      indexes = getIndexes(rect);
+      indexes = getIndexes(object);
 
       for (int i = 0; i < indexes.length; i++) {
-        nodes[indexes[i]].insert(rect);
+        nodes[indexes[i]].insert(object);
       }
       return;
     }
 
     /// Otherwise, store object here.
-    objects.add(rect);
+    objects.add(object);
 
     /// Max objects reached; only split if maxDepth hasn't been reached.
     if (objects.length > maxObjects && depth < maxDepth) {
       if (nodes.isEmpty) split();
 
       /// Add objects to their corresponding subnodes
-      for (final object in objects) {
-        getIndexes(object).forEach((index) {
-          nodes[index].insert(object);
+      for (final obj in objects) {
+        getIndexes(obj).forEach((index) {
+          nodes[index].insert(obj);
         });
       }
 
@@ -163,15 +164,15 @@ class Quadtree {
   }
 
   /// Return all objects that could collide with the given object, given
-  /// bounds [Rect].
-  List<Rect> retrieve(Rect rect) {
-    final indexes = getIndexes(rect);
-    final List<Rect> objects = [];
+  /// bounds [O].
+  List<O> retrieve(O object) {
+    final indexes = getIndexes(object);
+    final List<O> objects = [];
 
     /// Recursively retrieve objects from subnodes in the relevant indexes.
     if (nodes.isNotEmpty) {
       for (final index in indexes) {
-        objects.addAll(nodes[index].retrieve(rect));
+        objects.addAll(nodes[index].retrieve(object));
       }
     }
 
