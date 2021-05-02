@@ -1,14 +1,17 @@
-# quadtree_dart
+# Quadtree
 
-A new Flutter package project.
+A lightweight quadtree implementation written in Dart.
 
-## Getting Started
+## Motivation
 
-This project is a starting point for a Dart
-[package](https://flutter.dev/developing-packages/),
-a library module containing code that can be shared easily across
-multiple Flutter or Dart projects.
+I plan on building a force-directed-graph library in Dart that will use `quadtree_dart` to reduce the order complexity of force calculations from `O(n^2)` to `O(nlog(n))`.
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+## Example
+
+See `example/` for a fleshed-out example with tunable parameters.
+
+You can see it live on [rjmath-quadtree.web.app](https://rjmath-quadtree.web.app/#/) :tada:
+
+## Contribution
+
+Contibutions are welcome!
