@@ -1,3 +1,9 @@
-## 0.0.1
+# Changelog
 
-* TODO: Describe initial release.
+## 1.0.1
+
+Removed Flutter dependencies.
+
+## 1.0.0
+
+Initialized repo with algorithm and example.

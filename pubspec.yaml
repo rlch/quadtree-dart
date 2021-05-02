@@ -1,20 +1,14 @@
 name: quadtree_dart
 description: A lightweight implementation of Quadtrees in Dart.
-version: 1.0.0
-# homepage:
+version: 1.0.1
+homepage: https://rjmath-quadtree.web.app
+repository: https://github.com/rlch/quadtree-dart
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
-  flutter: ">=1.17.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
   quiver: ^3.0.1
 
 dev_dependencies:
   lint: ^1.5.2
-  flutter_test:
-    sdk: flutter
-
-flutter:
