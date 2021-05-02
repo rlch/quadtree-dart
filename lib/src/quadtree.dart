@@ -2,6 +2,8 @@ import 'package:quiver/core.dart';
 
 import 'rect.dart';
 
+enum Quadrant { ne, nw, sw, se }
+
 class Quadtree<O extends Rect> {
   Quadtree(
     this.bounds, {
@@ -9,7 +11,7 @@ class Quadtree<O extends Rect> {
     this.maxDepth = 4,
     this.depth = 0,
   })  : objects = [],
-        nodes = [];
+        nodes = {};
 
   final Rect bounds;
   final int maxObjects;
@@ -20,7 +22,7 @@ class Quadtree<O extends Rect> {
   final List<O> objects;
 
   /// Subnodes of the [Quadtree].
-  final List<Quadtree<O>> nodes;
+  final Map<Quadrant, Quadtree<O>> nodes;
 
   @override
   int get hashCode => hashObjects([
@@ -29,7 +31,7 @@ class Quadtree<O extends Rect> {
         maxDepth,
         depth,
         ...objects,
-        ...nodes,
+        ...nodes.entries,
       ]);
 
   @override
@@ -101,15 +103,19 @@ class Quadtree<O extends Rect> {
       depth: nextDepth,
     );
 
-    nodes.addAll([ne, nw, sw, se]);
+    nodes
+      ..[Quadrant.ne] = ne
+      ..[Quadrant.nw] = nw
+      ..[Quadrant.sw] = sw
+      ..[Quadrant.se] = se;
   }
 
-  /// Determines which node the object belongs to.
+  /// Determines which quadrants the object belongs to.
   ///
-  /// Takes the [O] bounds of the area to be checked.
-  /// Returns a [List<int>] of the intersecting subnodes (ne, nw, sw, se)
-  List<int> getIndexes(O object) {
-    final List<int> indexes = [];
+  /// Takes the bounds of the area to be checked.
+  /// Returns the intersecting subnodes (ne, nw, sw, se)
+  List<Quadrant> getQuadrants(Rect object) {
+    final List<Quadrant> quadrants = [];
     final xMidpoint = bounds.x + bounds.width / 2;
     final yMidpoint = bounds.y + bounds.height / 2;
 
@@ -118,32 +124,29 @@ class Quadtree<O extends Rect> {
     final endIsEast = object.x + object.width > xMidpoint;
     final endIsSouth = object.y + object.height > yMidpoint;
 
-    if (startIsNorth && endIsEast) indexes.add(0);
-    if (startIsWest && startIsNorth) indexes.add(1);
-    if (startIsWest && endIsSouth) indexes.add(2);
-    if (endIsEast && endIsSouth) indexes.add(3);
+    if (startIsNorth && endIsEast) quadrants.add(Quadrant.ne);
+    if (startIsWest && startIsNorth) quadrants.add(Quadrant.nw);
+    if (startIsWest && endIsSouth) quadrants.add(Quadrant.sw);
+    if (endIsEast && endIsSouth) quadrants.add(Quadrant.se);
 
-    return indexes;
+    return quadrants;
   }
 
   /// Insert the object into the node. If the node exceeds the capacity,
   /// it will split and add all objects to their corresponding subnodes.
   ///
-  /// Takes [O] bounds to be inserted.
+  /// Takes bounds to be inserted.
   void insert(O object) {
-    late final List<int> indexes;
-
     /// If we have subnodes, call [insert] on the matching subnodes.
     if (nodes.isNotEmpty) {
-      indexes = getIndexes(object);
+      final quadrants = getQuadrants(object);
 
-      for (int i = 0; i < indexes.length; i++) {
-        nodes[indexes[i]].insert(object);
+      for (int i = 0; i < quadrants.length; i++) {
+        nodes[quadrants[i]]!.insert(object);
       }
       return;
     }
 
-    /// Otherwise, store object here.
     objects.add(object);
 
     /// Max objects reached; only split if maxDepth hasn't been reached.
@@ -152,8 +155,8 @@ class Quadtree<O extends Rect> {
 
       /// Add objects to their corresponding subnodes
       for (final obj in objects) {
-        getIndexes(obj).forEach((index) {
-          nodes[index].insert(obj);
+        getQuadrants(obj).forEach((q) {
+          nodes[q]!.insert(obj);
         });
       }
 
@@ -164,29 +167,38 @@ class Quadtree<O extends Rect> {
   }
 
   /// Return all objects that could collide with the given object, given
-  /// bounds [O].
-  List<O> retrieve(O object) {
-    final indexes = getIndexes(object);
-    final List<O> objects = [];
+  /// bounds.
+  List<O> retrieve(Rect bounds) {
+    final quadrants = getQuadrants(bounds);
+    final List<O> objects = [...this.objects];
 
-    /// Recursively retrieve objects from subnodes in the relevant indexes.
+    /// Recursively retrieve objects from subnodes in the relevant quadrants.
     if (nodes.isNotEmpty) {
-      for (final index in indexes) {
-        objects.addAll(nodes[index].retrieve(object));
+      for (final q in quadrants) {
+        objects.addAll(nodes[q]!.retrieve(bounds));
       }
     }
 
     objects.removeDuplicates();
-
     return objects;
+  }
+
+  List<Rect> retrieveAllNodes([Quadtree<O>? quadtree]) {
+    final List<Rect> nodes = [(quadtree ?? this).bounds];
+
+    for (final node in (quadtree ?? this).nodes.values) {
+      nodes.addAll(retrieveAllNodes(node));
+    }
+
+    return nodes;
   }
 
   /// Clear the [Quadtree]
   void clear() {
     objects.clear();
 
-    for (final node in nodes) {
-      node.clear();
+    for (final node in nodes.values) {
+      if (node.nodes.isNotEmpty) node.clear();
     }
 
     nodes.clear();

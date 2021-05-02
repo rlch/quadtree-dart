@@ -1,6 +1,6 @@
 name: quadtree_dart
-description: A lightweight implementation of Quadtrees in Dart.
-version: 1.0.1
+description: A lightweight, extensive implementation of Quadtrees in Dart.
+version: 1.1.0
 homepage: https://rjmath-quadtree.web.app
 repository: https://github.com/rlch/quadtree-dart
 
