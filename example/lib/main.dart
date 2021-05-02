@@ -21,7 +21,7 @@ class App extends StatelessWidget {
     return Scaffold(
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: [ 
           SizedBox(
             width: 300,
             child: Sidebar(),

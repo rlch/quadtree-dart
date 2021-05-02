@@ -34,10 +34,16 @@ class _QuadtreeViewState extends State<QuadtreeView> {
   }
 
   void insertNode(BuildContext context, TapDownDetails details) {
-    final RenderBox? box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
+    final offset = details.localPosition;
 
-    final Offset offset = box.globalToLocal(details.globalPosition);
+    final quadtree = context.read(quadtreeProvider);
+    final xMax = quadtree.bounds.x + quadtree.bounds.width;
+    final yMax = quadtree.bounds.y + quadtree.bounds.height;
+
+    if (offset.dx > xMax || offset.dy > yMax) {
+      print('Cannot insert node outside quadtree bounds');
+      return;
+    }
 
     final lower = context.read(lowerNodeDiameterProvider).state;
     final higher = context.read(higherNodeDiameterProvider).state;
@@ -68,47 +74,49 @@ class _QuadtreeViewState extends State<QuadtreeView> {
         final nodes = retrieveNodes(quadtree);
         final objects = retrieveObjects(quadtree);
 
-        return GestureDetector(
-          onTapDown: (details) => insertNode(context, details),
-          child: Container(
-            alignment: Alignment.center,
-            color: Colors.black,
-            child: Stack(
-              children: [
-                Flow(
-                  delegate: NodeFlowDelegate(nodes),
-                  children: nodes
-                      .map(
-                        (node) => Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 1,
+        return Container(
+          alignment: Alignment.center,
+          color: Colors.black,
+          child: InteractiveViewer(
+            child: GestureDetector(
+              onTapDown: (details) => insertNode(context, details),
+              child: Stack(
+                children: [
+                  Flow(
+                    delegate: NodeFlowDelegate(nodes),
+                    children: nodes
+                        .map(
+                          (node) => Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1,
+                              ),
                             ),
+                            width: node.width,
+                            height: node.height,
                           ),
-                          width: node.width,
-                          height: node.height,
-                        ),
-                      )
-                      .toList(),
-                ),
-                Flow(
-                  delegate: ObjectFlowDelegate(objects),
-                  children: objects
-                      .map(
-                        (object) => Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
+                        )
+                        .toList(),
+                  ),
+                  Flow(
+                    delegate: ObjectFlowDelegate(objects),
+                    children: objects
+                        .map(
+                          (object) => Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            width: object.width,
+                            height: object.height,
                           ),
-                          width: object.width,
-                          height: object.height,
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
           ),
         );

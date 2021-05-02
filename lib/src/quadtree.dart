@@ -1,5 +1,6 @@
-import 'package:quadtree_dart/src/rect.dart';
 import 'package:quiver/core.dart';
+
+import 'rect.dart';
 
 class Quadtree {
   Quadtree(
@@ -146,16 +147,14 @@ class Quadtree {
 
     /// Max objects reached; only split if maxDepth hasn't been reached.
     if (objects.length > maxObjects && depth < maxDepth) {
-      if (nodes.isEmpty) {
-        split();
-      }
+      if (nodes.isEmpty) split();
 
       /// Add objects to their corresponding subnodes
-      objects.forEach((object) {
+      for (final object in objects) {
         getIndexes(object).forEach((index) {
           nodes[index].insert(object);
         });
-      });
+      }
 
       /// Node should be cleaned up as the objects are now contained within
       /// subnodes.
@@ -165,15 +164,15 @@ class Quadtree {
 
   /// Return all objects that could collide with the given object, given
   /// bounds [Rect].
-  List<Rect> retrieve(rect) {
+  List<Rect> retrieve(Rect rect) {
     final indexes = getIndexes(rect);
     final List<Rect> objects = [];
 
     /// Recursively retrieve objects from subnodes in the relevant indexes.
     if (nodes.isNotEmpty) {
-      indexes.forEach((index) {
+      for (final index in indexes) {
         objects.addAll(nodes[index].retrieve(rect));
-      });
+      }
     }
 
     objects.removeDuplicates();
@@ -185,9 +184,9 @@ class Quadtree {
   void clear() {
     objects.clear();
 
-    nodes.forEach((node) {
+    for (final node in nodes) {
       node.clear();
-    });
+    }
 
     nodes.clear();
   }
@@ -196,9 +195,9 @@ class Quadtree {
 /// Helper method to remove duplicates and preserve order.
 extension<T> on List<T> {
   void removeDuplicates() {
-    Set<T> items = {};
-    for (T item in this) {
-      if (items.contains(item)) this.remove(item);
+    final Set<T> items = {};
+    for (final T item in this) {
+      if (items.contains(item)) remove(item);
       items.add(item);
     }
   }

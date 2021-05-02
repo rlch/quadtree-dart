@@ -1,0 +1,29 @@
+include: package:lint/analysis_options.yaml
+
+linter:
+  rules:
+    always_put_required_named_parameters_first: true
+    sort_constructors_first: true
+    prefer_single_quotes: true
+    lines_longer_than_80_chars: false
+    avoid_classes_with_only_static_members: false
+    always_specify_types: false
+    type_annotate_public_apis: false
+    directives_ordering: true
+
+    ### Documentation ###
+    slash_for_doc_comments: true
+    comment_references: true
+    prefer_const_literals_to_create_immutables: false
+    avoid_setters_without_getters: false
+    sort_pub_dependencies: false
+    overridden_fields: false
+    curly_braces_in_flow_control_structures: false
+    import_of_legacy_library_into_null_safe: false
+    prefer_relative_imports: true
+
+analyzer:
+  exclude:
+    - lib/generated_plugin_registrant.dart
+    - lib/router.gr.dart
+    - lib/**/*.g.dart
