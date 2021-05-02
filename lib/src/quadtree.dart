@@ -209,7 +209,7 @@ class Quadtree<O extends Rect> {
 extension<T> on List<T> {
   void removeDuplicates() {
     final Set<T> items = {};
-    for (final T item in this) {
+    for (final T item in [...this]) {
       if (items.contains(item)) remove(item);
       items.add(item);
     }
