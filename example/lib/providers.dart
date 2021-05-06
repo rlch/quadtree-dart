@@ -39,7 +39,7 @@ class QuadtreeNotifier extends StateNotifier<Quadtree<VelocityObject>> {
     required int maxObjects,
     required int maxDepth,
   }) : super(Quadtree(
-          bounds,
+          bounds: bounds,
           maxObjects: maxObjects,
           maxDepth: maxDepth,
         ));
@@ -52,7 +52,7 @@ class QuadtreeNotifier extends StateNotifier<Quadtree<VelocityObject>> {
     required double dy,
   }) =>
       state = state
-        ..insert(VelocityObject(
+        ..add(VelocityObject(
           x: x,
           y: y,
           height: diameter,

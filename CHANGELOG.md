@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+Adding traversal methods.
+
 ## 1.1.0+1
 
 Fixing concurrent modification error.

@@ -70,7 +70,7 @@ class _QuadtreeViewState extends State<QuadtreeView>
                 o.tick();
               }
 
-              quadtree!.insert(o);
+              quadtree!.add(o);
             }
             nodes = quadtree!.retrieveAllNodes();
 

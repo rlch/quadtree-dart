@@ -14,7 +14,7 @@ extension Traversal<O extends Rect> on Quadtree<O> {
     while (quadtrees.isNotEmpty) {
       final quad = quadtrees.removeLast();
       if (!callback(quad.bounds)) {
-        quadtrees.addAll(quad.nodes.values);
+        quadtrees.addAll(quad.nodes ?? []);
       }
     }
   }
@@ -27,7 +27,7 @@ extension Traversal<O extends Rect> on Quadtree<O> {
 
     while (quadtrees.isNotEmpty) {
       final quad = quadtrees.removeLast();
-      quadtrees.addAll(quad.nodes.values);
+      quadtrees.addAll(quad.nodes ?? []);
 
       next.add(quad);
     }
