@@ -22,24 +22,24 @@ final quadtreeProvider =
   final maxDepth = ref.watch(maxDepthProvider).state;
 
   return QuadtreeNotifier(
-    bounds: Rect(
-      width: bounds.width,
-      height: bounds.height,
+    maxExtent: Rect(
+      width: bounds.width / 8,
+      height: bounds.height / 8,
       x: 0,
       y: 0,
     ),
     maxObjects: maxObjects,
-    maxDepth: maxDepth,
+    maxDepth: 1,
   );
 });
 
 class QuadtreeNotifier extends StateNotifier<Quadtree<VelocityObject>> {
   QuadtreeNotifier({
-    required Rect bounds,
+    required Rect maxExtent,
     required int maxObjects,
     required int maxDepth,
   }) : super(Quadtree(
-          bounds: bounds,
+          maxExtent: maxExtent,
           maxObjects: maxObjects,
           maxDepth: maxDepth,
         ));

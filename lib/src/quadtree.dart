@@ -1,34 +1,145 @@
-import 'dart:math';
-
 import 'package:quiver/core.dart';
 
+import 'helpers.dart';
+import 'node_constructors.dart';
 import 'rect.dart';
 
 class Quadtree<O extends Rect> {
   Quadtree({
-    required this.bounds,
+    QuadtreeNode<O>? root,
+    Rect? maxExtent,
+    this.maxObjects = 10,
+    this.maxDepth = 4,
+    this.expandExtent = true,
+  })  : assert(expandExtent || maxExtent != null),
+        extent = maxExtent ?? _defaultExtent,
+        root = root ??
+            QuadtreeNode(
+              extent: maxExtent ?? _defaultExtent,
+              depth: 0,
+              maxDepth: maxDepth,
+              maxObjects: maxObjects,
+            );
+
+  QuadtreeNode<O> root;
+  Rect extent;
+  final int maxObjects;
+  final int maxDepth;
+
+  /// Whether the quadtree should expand its [extent] or not.
+  /// If `true`, this means that [extent] sets the minimum bounding box.
+  final bool expandExtent;
+
+  static final _defaultExtent = Rect(x: 0, y: 0, height: 100, width: 100);
+
+  void add(O object) {
+    cover(object);
+    root.add(object);
+  }
+
+  void addAll(Iterable<O> objects) => objects.forEach(add);
+  void clear() => root.clear();
+  List<O> retrieve(Rect extent) => root.retrieve(extent);
+  List<O> retrieveAllObjects() => root.retrieveAllObjects();
+  List<Rect> retrieveAllNodes([QuadtreeNode<O>? quadtree]) =>
+      root.retrieveAllNodes(quadtree);
+
+  /// Expand the quadtree to cover the object dimensions given by `bounds`.
+  void cover(Rect bounds) {
+    if (!expandExtent) return;
+
+    var x0 = root.extent.left,
+        x1 = root.extent.right,
+        y0 = root.extent.top,
+        y1 = root.extent.bottom;
+
+    final bx0 = bounds.left,
+        bx1 = bounds.right,
+        by0 = bounds.top,
+        by1 = bounds.bottom;
+
+    double zx = root.extent.width;
+    double zy = root.extent.height;
+
+    QuadtreeNode<O> constructParent(int i) {
+      return QuadtreeNode<O>(
+        extent: Rect(
+          x: i % 2 == 1 ? x0 : x0 - zx,
+          y: i <= 1 ? y0 - zy : y0,
+          width: zx * 2,
+          height: zy * 2,
+        ),
+        depth: root.depth - 1,
+        maxObjects: root.maxObjects,
+        maxDepth: root.maxDepth,
+      );
+    }
+
+    while (bx0 < x0 || bx1 > x1 || by0 < y0 || by1 > y1) {
+      /// Could use a bitwise operator here; but less clean as type
+      /// coercion from bool > int isn't available in Dart :'(
+      /// This seems more comprehendable
+      late final int i;
+      if (by0 < y0) {
+        if (bx0 < x0) {
+          i = 0; // UL => 3
+        } else {
+          i = 1; // UR => 2
+        }
+      } else {
+        if (bx0 < x0) {
+          i = 2; // LL => 1
+        } else {
+          i = 3; // LR => 0
+        }
+      }
+
+      final QuadtreeNode<O> parent = constructParent(i);
+      parent.nodes = (<QuadtreeNode<O> Function()>[
+        parent.constructNW,
+        parent.constructNE,
+        parent.constructSE,
+        parent.constructSW
+      ]..[(i - 3).abs()] = () => root)
+          .map((f) => f())
+          .toList();
+
+      root = parent;
+      x0 = root.extent.left;
+      x1 = root.extent.right;
+      y0 = root.extent.top;
+      y1 = root.extent.bottom;
+      zx *= 2;
+      zy *= 2;
+    }
+  }
+}
+
+class QuadtreeNode<O extends Rect> {
+  QuadtreeNode({
+    Rect? extent,
     this.maxObjects = 10,
     this.maxDepth = 4,
     this.depth = 0,
-  })  : shouldCover = true,
+  })  : extent = extent ?? Rect(x: 0, y: 0, height: 100, width: 100),
+        nodes = [],
         objects = [];
 
-  Rect bounds;
+  Rect extent;
   final int maxObjects;
   final int maxDepth;
   final int depth;
-  final bool shouldCover;
 
   /// Objects contained within the node
   final List<O> objects;
 
   /// Subnodes of the [Quadtree].
-  List<Quadtree<O>>? nodes;
-  bool get isLeaf => nodes == null;
+  /// If `null` then we have a leaf node.
+  List<QuadtreeNode<O>>? nodes;
 
   @override
   int get hashCode => hashObjects([
-        bounds,
+        extent,
         maxObjects,
         maxDepth,
         depth,
@@ -38,84 +149,31 @@ class Quadtree<O extends Rect> {
 
   @override
   bool operator ==(o) =>
-      o is Quadtree &&
-      o.bounds == bounds &&
+      o is QuadtreeNode &&
+      o.extent == extent &&
       o.maxObjects == maxObjects &&
       o.maxDepth == maxDepth &&
       o.depth == depth &&
       o.nodes == nodes;
 
-  /// Split the node into 4 subnodes (ne, nw, sw, se)
+  /// Split the node into 4 subnodes (nw, ne, sw, se)
   void split() {
-    final nextDepth = depth + 1;
-    final subWidth = bounds.width / 2;
-    final subHeight = bounds.height / 2;
-    final x = bounds.x;
-    final y = bounds.y;
-
-    /// Top-right node
-    final ne = Quadtree<O>(
-      bounds: Rect(
-        x: x + subWidth,
-        y: y,
-        width: subWidth,
-        height: subHeight,
-      ),
-      maxObjects: maxObjects,
-      maxDepth: maxDepth,
-      depth: nextDepth,
-    );
-
-    /// Top-left node
-    final nw = Quadtree<O>(
-      bounds: Rect(
-        x: x,
-        y: y,
-        width: subWidth,
-        height: subHeight,
-      ),
-      maxObjects: maxObjects,
-      maxDepth: maxDepth,
-      depth: nextDepth,
-    );
-
-    /// Bottom-left node
-    final sw = Quadtree<O>(
-      bounds: Rect(
-        x: x,
-        y: y + subHeight,
-        width: subWidth,
-        height: subHeight,
-      ),
-      maxObjects: maxObjects,
-      maxDepth: maxDepth,
-      depth: nextDepth,
-    );
-
-    /// Bottom-right node
-    final se = Quadtree<O>(
-      bounds: Rect(
-        x: x + subWidth,
-        y: y + subHeight,
-        width: subWidth,
-        height: subHeight,
-      ),
-      maxObjects: maxObjects,
-      maxDepth: maxDepth,
-      depth: nextDepth,
-    );
-
-    nodes = [nw, ne, sw, se];
+    nodes = [
+      constructNW(),
+      constructNE(),
+      constructSW(),
+      constructSE(),
+    ];
   }
 
   /// Determines which quadrants the object belongs to.
   ///
-  /// Takes the bounds of the area to be checked.
-  /// Returns the intersecting subnodes (ne, nw, sw, se)
+  /// Takes the extent of the area to be checked.
+  /// Returns the intersecting subnodes (nw, ne sw, se)
   List<int> getQuadrants(Rect object) {
     final List<int> quadrants = [];
-    final xMidpoint = bounds.x + bounds.width / 2;
-    final yMidpoint = bounds.y + bounds.height / 2;
+    final xMidpoint = extent.x + extent.width / 2;
+    final yMidpoint = extent.y + extent.height / 2;
 
     final startIsNorth = object.y < yMidpoint;
     final startIsWest = object.x < xMidpoint;
@@ -133,9 +191,9 @@ class Quadtree<O extends Rect> {
   /// Insert the object into the node. If the node exceeds the capacity,
   /// it will split and add all objects to their corresponding subnodes.
   ///
-  /// Takes bounds to be inserted.
+  /// Takes extent to be inserted.
   void add(O object) {
-    /// If we have subnodes, call [insert] on the matching subnodes.
+    /// If we have subnodes, call [add] on the matching subnodes.
     if (nodes?.isNotEmpty ?? false) {
       final quadrants = getQuadrants(object);
 
@@ -149,12 +207,12 @@ class Quadtree<O extends Rect> {
 
     /// Max objects reached; only split if maxDepth hasn't been reached.
     if (objects.length > maxObjects && depth < maxDepth) {
-      if (nodes?.isEmpty ?? false) split();
+      if (nodes?.isEmpty ?? true) split();
 
       /// Add objects to their corresponding subnodes
       for (final obj in objects) {
-        getQuadrants(obj).forEach((q) {
-          nodes![q].add(obj);
+        getQuadrants(obj).forEach((i) {
+          nodes![i].add(obj);
         });
       }
 
@@ -164,30 +222,18 @@ class Quadtree<O extends Rect> {
     }
   }
 
-  void cover(O object) {
-    if (bounds == null) {
-      bounds = Rect(
-        x: object.x.floorToDouble(),
-        y: object.y.floorToDouble(),
-        height: object.height.ceilToDouble(),
-        width: object.width.ceilToDouble(),
-      );
-      return;
-    } else {
-      final z = max(bounds.width, 1);
-    }
-  }
+  void addAll(Iterable<O> objects) => objects.forEach(add);
 
   /// Return all objects that could collide with the given object, given
-  /// bounds.
-  List<O> retrieve(Rect bounds) {
-    final quadrants = getQuadrants(bounds);
+  /// extent.
+  List<O> retrieve(Rect extent) {
+    final quadrants = getQuadrants(extent);
     final List<O> objects = [...this.objects];
 
     /// Recursively retrieve objects from subnodes in the relevant quadrants.
     if (nodes?.isNotEmpty ?? false) {
       for (final q in quadrants) {
-        objects.addAll(nodes![q].retrieve(bounds));
+        objects.addAll(nodes![q].retrieve(extent));
       }
     }
 
@@ -195,12 +241,26 @@ class Quadtree<O extends Rect> {
     return objects;
   }
 
-  List<Rect> retrieveAllNodes([Quadtree<O>? quadtree]) {
+  List<O> retrieveAllObjects() {
+    final List<QuadtreeNode<O>> nodes = [this];
+    final List<O> objects = [];
+
+    while (nodes.isNotEmpty) {
+      final node = nodes.removeLast();
+      nodes.addAll(node.nodes ?? []);
+      objects.addAll(node.objects);
+    }
+
+    objects.removeDuplicates();
+    return objects;
+  }
+
+  List<Rect> retrieveAllNodes([QuadtreeNode<O>? quadtree]) {
     final List<Rect> nodes = [
-      if (quadtree?.bounds != null || bounds != null) (quadtree ?? this).bounds
+      if (quadtree?.extent != null) (quadtree ?? this).extent
     ];
 
-    for (final node in (quadtree ?? this).nodes ?? <Quadtree<O>>[]) {
+    for (final node in (quadtree ?? this).nodes ?? <QuadtreeNode<O>>[]) {
       nodes.addAll(retrieveAllNodes(node));
     }
 
@@ -211,21 +271,10 @@ class Quadtree<O extends Rect> {
   void clear() {
     objects.clear();
 
-    for (final node in nodes ?? <Quadtree<O>>[]) {
+    for (final node in nodes ?? <QuadtreeNode<O>>[]) {
       if (node.nodes?.isNotEmpty ?? false) node.clear();
     }
 
-    nodes!.clear();
-  }
-}
-
-/// Helper method to remove duplicates and preserve order.
-extension<T> on List<T> {
-  void removeDuplicates() {
-    final Set<T> items = {};
-    for (final T item in [...this]) {
-      if (items.contains(item)) remove(item);
-      items.add(item);
-    }
+    nodes?.clear();
   }
 }

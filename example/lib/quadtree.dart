@@ -37,7 +37,7 @@ class _QuadtreeViewState extends State<QuadtreeView>
           ..addListener(() {
             if (quadtree == null) return;
 
-            objects = quadtree!.retrieve(quadtree!.bounds);
+            objects = quadtree!.retrieveAllObjects();
 
             quadtree!.clear();
             for (final o in objects) {
@@ -53,19 +53,19 @@ class _QuadtreeViewState extends State<QuadtreeView>
                   }
                 }
 
-                if (!collided) {
-                  if (o.x + o.width >=
-                          quadtree!.bounds.x + quadtree!.bounds.width ||
-                      o.x <= quadtree!.bounds.x) {
-                    o.collideLR();
-                  }
+                // if (!collided) {
+                //   if (o.x + o.width >=
+                //           quadtree!.extent.x + quadtree!.extent.width ||
+                //       o.x <= quadtree!.extent.x) {
+                //     o.collideLR();
+                //   }
 
-                  if (o.y + o.height >=
-                          quadtree!.bounds.y + quadtree!.bounds.height ||
-                      o.y <= quadtree!.bounds.y) {
-                    o.collideTB();
-                  }
-                }
+                //   if (o.y + o.height >=
+                //           quadtree!.extent.y + quadtree!.extent.height ||
+                //       o.y <= quadtree!.extent.y) {
+                //     o.collideTB();
+                //   }
+                // }
 
                 o.tick();
               }
@@ -91,17 +91,17 @@ class _QuadtreeViewState extends State<QuadtreeView>
   void insertNode(BuildContext context, TapDownDetails details) {
     final offset = details.localPosition;
 
-    final quadtree = context.read(quadtreeProvider);
-    final xMax = quadtree.bounds.x + quadtree.bounds.width;
-    final yMax = quadtree.bounds.y + quadtree.bounds.height;
+    // final quadtree = context.read(quadtreeProvider);
+    // final xMax = quadtree.extent.x + quadtree.extent.width;
+    // final yMax = quadtree.extent.y + quadtree.extent.height;
 
-    if (offset.dx > xMax ||
-        offset.dy > yMax ||
-        offset.dx < 0 ||
-        offset.dy < 0) {
-      print('Cannot insert node outside quadtree bounds');
-      return;
-    }
+    // if (offset.dx > xMax ||
+    //     offset.dy > yMax ||
+    //     offset.dx < 0 ||
+    //     offset.dy < 0) {
+    //   print('Cannot insert node outside quadtree bounds');
+    //   return;
+    // }
 
     final random = Random();
 
@@ -123,7 +123,7 @@ class _QuadtreeViewState extends State<QuadtreeView>
           dx: velocity.x,
           dy: velocity.y,
         );
-    print('Inserted node at (${offset.dx}, ${offset.dy})');
+    // print('Inserted node at (${offset.dx}, ${offset.dy})');
   }
 
   @override
@@ -149,6 +149,8 @@ class _QuadtreeViewState extends State<QuadtreeView>
               alignment: Alignment.center,
               color: Colors.black,
               child: InteractiveViewer(
+                boundaryMargin: EdgeInsets.all(double.infinity),
+                minScale: 0.5,
                 child: MouseRegion(
                   onHover: (details) => hoveringOffset = details.localPosition,
                   onExit: (_) => hoveringOffset = null,

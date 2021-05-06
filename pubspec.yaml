@@ -12,3 +12,4 @@ dependencies:
 
 dev_dependencies:
   lint: ^1.5.2
+  json_serializable: ^4.1.1
