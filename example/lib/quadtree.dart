@@ -20,7 +20,7 @@ class _QuadtreeViewState extends State<QuadtreeView>
   bool shouldCollide = true;
   double spotlightDiameter = 100;
 
-  Quadtree<VelocityObject>? quadtree;
+  RectQuadtree<VelocityObject>? quadtree;
 
   List<VelocityObject> objects = [];
   List<VelocityObject> matchedObjects = [];
@@ -53,19 +53,19 @@ class _QuadtreeViewState extends State<QuadtreeView>
                   }
                 }
 
-                // if (!collided) {
-                //   if (o.x + o.width >=
-                //           quadtree!.extent.x + quadtree!.extent.width ||
-                //       o.x <= quadtree!.extent.x) {
-                //     o.collideLR();
-                //   }
+                if (!collided) {
+                  if (o.x + o.width >=
+                          quadtree!.extent.x + quadtree!.extent.width ||
+                      o.x <= quadtree!.extent.x) {
+                    o.collideLR();
+                  }
 
-                //   if (o.y + o.height >=
-                //           quadtree!.extent.y + quadtree!.extent.height ||
-                //       o.y <= quadtree!.extent.y) {
-                //     o.collideTB();
-                //   }
-                // }
+                  if (o.y + o.height >=
+                          quadtree!.extent.y + quadtree!.extent.height ||
+                      o.y <= quadtree!.extent.y) {
+                    o.collideTB();
+                  }
+                }
 
                 o.tick();
               }
@@ -91,17 +91,17 @@ class _QuadtreeViewState extends State<QuadtreeView>
   void insertNode(BuildContext context, TapDownDetails details) {
     final offset = details.localPosition;
 
-    // final quadtree = context.read(quadtreeProvider);
-    // final xMax = quadtree.extent.x + quadtree.extent.width;
-    // final yMax = quadtree.extent.y + quadtree.extent.height;
+    final quadtree = context.read(quadtreeProvider);
+    final xMax = quadtree.extent.x + quadtree.extent.width;
+    final yMax = quadtree.extent.y + quadtree.extent.height;
 
-    // if (offset.dx > xMax ||
-    //     offset.dy > yMax ||
-    //     offset.dx < 0 ||
-    //     offset.dy < 0) {
-    //   print('Cannot insert node outside quadtree bounds');
-    //   return;
-    // }
+    if (offset.dx > xMax ||
+        offset.dy > yMax ||
+        offset.dx < 0 ||
+        offset.dy < 0) {
+      print('Cannot insert node outside quadtree bounds');
+      return;
+    }
 
     final random = Random();
 
@@ -145,6 +145,8 @@ class _QuadtreeViewState extends State<QuadtreeView>
             shouldCollide = watch(shouldCollideProvider).state;
             spotlightDiameter = watch(spotlightDiameterProvider).state;
 
+            // print(quadtree?.extent);
+
             return Container(
               alignment: Alignment.center,
               color: Colors.black,
@@ -156,31 +158,40 @@ class _QuadtreeViewState extends State<QuadtreeView>
                   onExit: (_) => hoveringOffset = null,
                   child: GestureDetector(
                     onTapDown: (details) => insertNode(context, details),
-                    child: Stack(
-                      children: [
-                        if (hoveringOffset != null)
-                          Transform.translate(
-                            offset: hoveringOffset! -
-                                Offset(
-                                  spotlightDiameter / 2,
-                                  spotlightDiameter / 2,
+                    child: SizedBox(
+                      width: quadtree?.extent.width,
+                      height: quadtree?.extent.height,
+                      child: Stack(
+                        children: [
+                          if (hoveringOffset != null)
+                            Transform.translate(
+                              offset: hoveringOffset! -
+                                  Offset(
+                                    spotlightDiameter / 2,
+                                    spotlightDiameter / 2,
+                                  ),
+                              child: Container(
+                                width: spotlightDiameter,
+                                height: spotlightDiameter,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white),
+                                  color: Colors.blue.withOpacity(0.1),
                                 ),
-                            child: Container(
-                              width: spotlightDiameter,
-                              height: spotlightDiameter,
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.white),
-                                color: Colors.blue.withOpacity(0.1),
                               ),
                             ),
-                          ),
-                        Flow(
-                          delegate: NodeFlowDelegate(nodes),
-                          children: nodes
-                              .map(
-                                (node) => Container(
+                          Flow(
+                            clipBehavior: Clip.none,
+                            delegate: NodeFlowDelegate(nodes),
+                            children: nodes.map(
+                              (node) {
+                                final isOriginal = size.width == node.width &&
+                                    node.x == 0 &&
+                                    node.y == 0;
+                                return Container(
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.05),
+                                    color: isOriginal
+                                        ? Colors.purple.withOpacity(0.1)
+                                        : Colors.white.withOpacity(0.05),
                                     border: Border.all(
                                       color: Colors.white,
                                       width: 1,
@@ -188,48 +199,50 @@ class _QuadtreeViewState extends State<QuadtreeView>
                                   ),
                                   width: node.width,
                                   height: node.height,
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        Flow(
-                          delegate: ObjectFlowDelegate(objects),
-                          children: objects.map(
-                            (object) {
-                              final inQuery = matchedObjects.contains(object);
-                              bool intersectsHitBox = false;
-                              if (hoveringOffset != null && inQuery) {
-                                final offset = hoveringOffset! -
-                                    Offset(
-                                      spotlightDiameter / 2,
-                                      spotlightDiameter / 2,
-                                    );
-                                intersectsHitBox = Rect(
-                                  x: offset.dx,
-                                  y: offset.dy,
-                                  width: spotlightDiameter,
-                                  height: spotlightDiameter,
-                                ).intersects(object);
-                              }
+                                );
+                              },
+                            ).toList(),
+                          ),
+                          Flow(
+                            clipBehavior: Clip.none,
+                            delegate: ObjectFlowDelegate(objects),
+                            children: objects.map(
+                              (object) {
+                                final inQuery = matchedObjects.contains(object);
+                                bool intersectsHitBox = false;
+                                if (hoveringOffset != null && inQuery) {
+                                  final offset = hoveringOffset! -
+                                      Offset(
+                                        spotlightDiameter / 2,
+                                        spotlightDiameter / 2,
+                                      );
+                                  intersectsHitBox = Rect(
+                                    x: offset.dx,
+                                    y: offset.dy,
+                                    width: spotlightDiameter,
+                                    height: spotlightDiameter,
+                                  ).intersects(object);
+                                }
 
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: hoveringOffset == null
-                                      ? Colors.red
-                                      : (intersectsHitBox
-                                          ? Colors.blue
-                                          : inQuery
-                                              ? Colors.purple
-                                              : Colors.red),
-                                  shape: BoxShape.circle,
-                                ),
-                                width: object.width,
-                                height: object.height,
-                              );
-                            },
-                          ).toList(),
-                        ),
-                      ],
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: hoveringOffset == null
+                                        ? Colors.red
+                                        : (intersectsHitBox
+                                            ? Colors.blue
+                                            : inQuery
+                                                ? Colors.purple
+                                                : Colors.red),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  width: object.width,
+                                  height: object.height,
+                                );
+                              },
+                            ).toList(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
