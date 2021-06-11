@@ -7,10 +7,9 @@ class RectQuadtree<O extends Rect> implements Quadtree<O> {
     Rect? maxExtent,
     this.maxObjects = 10,
     this.maxDepth = 4,
-  })  : extent = maxExtent ?? Quadtree.defaultExtent,
-        root = root ??
+  }) : root = root ??
             RectQuadtreeNode(
-              extent: maxExtent ?? Quadtree.defaultExtent,
+              extent: maxExtent ?? QuadtreeNode.defaultExtent,
               depth: 0,
               maxDepth: maxDepth,
               maxObjects: maxObjects,
@@ -18,7 +17,6 @@ class RectQuadtree<O extends Rect> implements Quadtree<O> {
 
   @override
   RectQuadtreeNode<O> root;
-  Rect extent;
   final int maxObjects;
   final int maxDepth;
 

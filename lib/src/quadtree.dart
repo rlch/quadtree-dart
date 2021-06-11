@@ -1,10 +1,9 @@
 import 'rect.dart';
 
 abstract class Quadtree<O> {
-  Quadtree._(this.extent);
+  Quadtree._();
 
   QuadtreeNode<O> get root;
-  Rect extent;
 
   void add(O object);
   void addAll(Iterable<O> objects);
@@ -17,15 +16,12 @@ abstract class Quadtree<O> {
   int get hashCode;
   @override
   bool operator ==(o);
-
-  static final defaultExtent = Rect(x: 0, y: 0, height: 100, width: 100);
 }
 
 abstract class QuadtreeNode<O> {
-  QuadtreeNode._(this.objects);
+  QuadtreeNode._(this.extent);
 
-  /// Objects contained within the node
-  final List<O> objects;
+  Rect extent;
 
   /// Subnodes of the [Quadtree].
   /// If `null` then we have a leaf node.
@@ -44,4 +40,6 @@ abstract class QuadtreeNode<O> {
   int get hashCode;
   @override
   bool operator ==(o);
+
+  static final defaultExtent = Rect(x: 0, y: 0, height: 100, width: 100);
 }

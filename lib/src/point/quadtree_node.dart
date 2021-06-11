@@ -6,22 +6,15 @@ import 'node_constructors.dart';
 
 class PointQuadtreeNode<O extends Rect> implements QuadtreeNode<O> {
   PointQuadtreeNode({
+    this.leaf,
     Rect? extent,
-    this.maxObjects = 10,
-    this.maxDepth = 4,
-    this.depth = 0,
   })  : extent = extent ?? Rect(x: 0, y: 0, height: 100, width: 100),
-        nodes = [],
-        objects = [];
+        nodes = [];
 
   @override
   Rect extent;
-  final int maxObjects;
-  final int maxDepth;
-  final int depth;
 
-  @override
-  final List<O> objects;
+  O? leaf;
 
   @override
   List<PointQuadtreeNode<O>>? nodes;
@@ -39,7 +32,6 @@ class PointQuadtreeNode<O extends Rect> implements QuadtreeNode<O> {
   @override
   bool operator ==(o) =>
       o is PointQuadtreeNode &&
-      o.extent == extent &&
       o.maxObjects == maxObjects &&
       o.maxDepth == maxDepth &&
       o.depth == depth &&

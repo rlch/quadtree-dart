@@ -11,16 +11,13 @@ extension Traversal<O extends Rect> on Quadtree<O> {
   /// that node are not visited; otherwise, all child nodes are visited.
   void preOrderTraverse(PreOrderCallback callback) {
     final List<QuadtreeNode<O>> quadtrees = [root];
-    final List<Rect> extents = [extent];
 
     while (quadtrees.isNotEmpty) {
       final quad = quadtrees.removeLast();
-      final extent = extents.removeLast();
 
-      if (!callback(extent)) {
+      if (!callback(quad.extent)) {
         for (int i = 0; i < (quad.nodes?.length ?? 0); i++) {
           quadtrees.add(quad.nodes![i]);
-          extents.add(extent.quadrant(i));
         }
       }
     }
@@ -30,24 +27,21 @@ extension Traversal<O extends Rect> on Quadtree<O> {
   /// invoking the specified callback.
   void postOrderTraverse(PostOrderCallback callback) {
     final List<QuadtreeNode<O>> quadtrees = [root];
-    final List<Rect> extents = [extent];
-    final List<Rect> next = [];
+    final List<QuadtreeNode<O>> next = [];
 
     while (quadtrees.isNotEmpty) {
       final quad = quadtrees.removeLast();
-      final extent = extents.removeLast();
 
       for (int i = 0; i < (quad.nodes?.length ?? 0); i++) {
         quadtrees.add(quad.nodes![i]);
-        extents.add(extent.quadrant(i));
       }
 
-      next.add(extent);
+      next.add(quad);
     }
 
     while (next.isNotEmpty) {
-      final extent = next.removeLast();
-      callback(extent);
+      final quad = next.removeLast();
+      callback(quad.extent);
     }
   }
 }

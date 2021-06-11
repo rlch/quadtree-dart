@@ -20,7 +20,7 @@ class RectQuadtreeNode<O extends Rect> implements QuadtreeNode<O> {
   final int maxDepth;
   final int depth;
 
-  @override
+  /// Objects contained within the node
   final List<O> objects;
 
   @override

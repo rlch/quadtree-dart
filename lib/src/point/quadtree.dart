@@ -11,7 +11,6 @@ class PointQuadtree<O extends Rect> implements Quadtree<O> {
   })  : extent = maxExtent ?? Quadtree.defaultExtent,
         root = root ??
             PointQuadtreeNode(
-              extent: maxExtent ?? Quadtree.defaultExtent,
               depth: 0,
               maxDepth: maxDepth,
               maxObjects: maxObjects,
@@ -19,7 +18,9 @@ class PointQuadtree<O extends Rect> implements Quadtree<O> {
 
   @override
   PointQuadtreeNode<O> root;
+  @override
   Rect extent;
+
   final int maxObjects;
   final int maxDepth;
 
@@ -42,10 +43,7 @@ class PointQuadtree<O extends Rect> implements Quadtree<O> {
 
   /// Expand the quadtree to cover the object dimensions given by `bounds`.
   void cover(Rect bounds) {
-    var x0 = root.extent.x0,
-        x1 = root.extent.x1,
-        y0 = root.extent.y0,
-        y1 = root.extent.y1;
+    var x0 = extent.x0, x1 = extent.x1, y0 = extent.y0, y1 = extent.y1;
 
     final bx0 = bounds.x0, bx1 = bounds.x1, by0 = bounds.y0, by1 = bounds.y1;
 
@@ -83,7 +81,7 @@ class PointQuadtree<O extends Rect> implements Quadtree<O> {
         }
       }
 
-      final PointQuadtreeNode<O> parent = constructParent(root.extent, i);
+      final PointQuadtreeNode<O> parent = constructParent(extent, i);
       // parent.nodes = (<PointQuadtreeNode<O> Function()>[
       //   parent.constructNW,
       //   parent.constructNE,
